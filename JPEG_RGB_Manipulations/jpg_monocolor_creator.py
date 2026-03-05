@@ -1,4 +1,4 @@
-from fits_manager import FITSManager
+#from fits_manager import FITSManager
 from jpeg_manager import *
 from jpeg_manager import JPEGManager
 
@@ -16,8 +16,16 @@ if __name__ == "__main__":
 
     #print(f"average rgbs is r={tpl[0]} g={tpl[1]} b={tpl[2]}")
 
-    JPEGManager.generate_monocolour_files(100)
-    print(f"Done!")
+    # Create training set of jpegs, saved to R,G,B dirs depending on maximal color
+    # number = 100
+    # JPEGManager.generate_monocolour_files(number)
+    # print(f"Training R,G,B set of {number} jpegs done!")
+
+    # Create raw jpegs, saved to R,G,B dirs depending on maximal color
+    number = 100
+    JPEGManager.generate_raw_monocolour_files(number)
+    print(f"{number} raw jpegs done!")
+
 
 
 

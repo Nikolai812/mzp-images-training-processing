@@ -116,3 +116,35 @@ class JPEGManager:
 
             print(f"Generated RGB ({r}, {g}, {b}) → saved to corresponding folder(s)")
 
+    @classmethod
+    def generate_raw_monocolour_files(cls, number: int,
+                                  width: int = 256, height: int = 256) -> None:
+        """
+                Generate 'number' monocolour JPEG files with random RGB values.
+                Files are stored in folders R, G, B depending on the max channel(s).
+
+                Args:
+                    number: How many files to generate.
+                    width: Image width (default: 256).
+                    height: Image height (default: 256).
+                """
+        raw_input_dir = "./RAW_INPUT"
+        # Ensure directory for raw input exist
+        os.makedirs(raw_input_dir, exist_ok=True)
+
+        for i in range(number):
+            # Random RGB values
+            r, g, b = random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
+            max_val = max(r, g, b)
+
+            # Create JPEG file
+            file_name = cls.standard_file_name(r, g, b)
+            # temp_file_path = cls.create_jpeg_rgb(r, g, b, width, height)
+
+            # Copy/move file to channel folders
+
+            cls.create_jpeg_rgb(r, g, b, width, height, output_dir=raw_input_dir)
+
+            print(f"Generated raw file: ({r}, {g}, {b}) → saved to raw folder: {raw_input_dir}")
+
+        print(f"!!!\nGenerated {number }raw files and saved to raw folder: {raw_input_dir}")
