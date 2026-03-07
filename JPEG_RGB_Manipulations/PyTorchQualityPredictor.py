@@ -1,6 +1,7 @@
 import os
 import torch
 from torchvision import transforms
+from PyTorchImageQualityTrainer import PyTorchImageQualityTrainer
 from PIL import Image
 import json
 
@@ -49,8 +50,6 @@ class PyTorchQualityPredictor:
 
 # Example usage
 if __name__ == "__main__":
-    from PyTorchImageQualityTrainer import PyTorchImageQualityTrainer
-
     # Path to your trained model
     model_path = "./MODELS/PYTORCH/model.pth"
 

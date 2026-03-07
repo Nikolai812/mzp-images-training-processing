@@ -14,31 +14,44 @@ def main():
     os.makedirs(models_dir, exist_ok=True)
 
     if args.framework == "pytorch":
-        import torch
-        from PyTorchImageQualityTrainer import PyTorchImageQualityTrainer
-
-        trainer = PyTorchImageQualityTrainer(root_dir='.')
         pytorch_subdir = 'PYTORCH'
         pytorch_models_path = os.path.join(models_dir, pytorch_subdir)
         os.makedirs(pytorch_models_path, exist_ok=True)
 
         if args.train:
+            from PyTorchImageQualityTrainer import PyTorchImageQualityTrainer
+            trainer = PyTorchImageQualityTrainer(root_dir='.')
             trainer.load_dataset()
             trainer.initialize_model()
             trainer.train(epochs=args.epochs)
             model_filename = os.path.join(pytorch_models_path, args.model_path)
-            torch.save(trainer.model.state_dict(), model_filename)
+            trainer.save(model_filename)
             print(f"PyTorch model saved to {model_filename}")
 
         elif args.predict:
-            trainer.model = PyTorchImageQualityTrainer.ColorCNN()
-            model_filename = os.path.join(pytorch_models_path, args.model_path)
-            trainer.model.load_state_dict(torch.load(model_filename))
-            trainer.model.eval()
-            print(f"PyTorch model loaded from {model_filename}")
+            from PyTorchImageQualityTrainer import PyTorchImageQualityTrainer
+            from PyTorchQualityPredictor import PyTorchQualityPredictor
 
-            # Add prediction logic here (e.g., call a prediction function)
-            # Example: predict_and_save(trainer.model, input_dir="./RAWINPUT", output_file="output_dict.json")
+            # Path to your trained model
+            model_path = "./MODELS/PYTORCH/model.pth"
+
+            # Directory containing new images to classify
+            input_dir = "./RAW_INPUT"
+            image_paths = [os.path.join(input_dir, f) for f in os.listdir(input_dir) if f.lower().endswith('.jpg')]
+
+            # Initialize predictor
+            predictor = PyTorchQualityPredictor(model_path)
+
+            # Predict main colors
+            results = predictor.predict(image_paths)
+
+            # Print results
+            print("Classification results:")
+            for filename, main_color in results.items():
+                print(f"{filename}: {main_color}")
+
+            # Save results to file
+            predictor.save_results(results, "output_dict.json")
 
         else:
             raise ValueError("Specify either --train or --predict for PyTorch.")
@@ -46,7 +59,6 @@ def main():
     elif args.framework == "tensorflow":
         from tensorflow.keras import models
         from TensorFlowImageQualityTrainer import TensorFlowImageQualityTrainer
-
         trainer = TensorFlowImageQualityTrainer(root_dir='.')
 
         if args.train:

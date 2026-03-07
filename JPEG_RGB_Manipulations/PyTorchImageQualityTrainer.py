@@ -81,3 +81,7 @@ class PyTorchImageQualityTrainer:
                 if i % 10 == 0:
                     print(f'Epoch [{epoch+1}/{epochs}], Step [{i+1}/{len(self.dataloader)}], Loss: {loss.item():.4f}')
         print("Training complete!")
+
+    # wrapper for a torch.save
+    def save(self, model_filename):
+        torch.save(self.model.state_dict(), model_filename)
