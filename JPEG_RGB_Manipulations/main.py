@@ -29,7 +29,6 @@ def main():
             print(f"PyTorch model saved to {model_filename}")
 
         elif args.predict:
-            from PyTorchImageQualityTrainer import PyTorchImageQualityTrainer
             from PyTorchQualityPredictor import PyTorchQualityPredictor
 
             # Path to your trained model
