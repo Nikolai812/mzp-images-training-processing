@@ -108,11 +108,11 @@ class JPEGManager:
 
             # Copy/move file to channel folders
             if r == max_val:
-                cls.create_jpeg_rgb(r, g, b, width, height, output_dir="R")
+                cls.create_jpeg_rgb(r, g, b, width, height, output_dir="TRAINING_INPUT/R")
             if g == max_val:
-                cls.create_jpeg_rgb(r, g, b, width, height, output_dir="G")
+                cls.create_jpeg_rgb(r, g, b, width, height, output_dir="TRAINING_INPUT/G")
             if b == max_val:
-                cls.create_jpeg_rgb(r, g, b, width, height, output_dir="B")
+                cls.create_jpeg_rgb(r, g, b, width, height, output_dir="TRAINING_INPUT/B")
 
             print(f"Generated RGB ({r}, {g}, {b}) → saved to corresponding folder(s)")
 

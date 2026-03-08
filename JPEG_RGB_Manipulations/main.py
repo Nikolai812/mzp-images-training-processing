@@ -19,8 +19,9 @@ def main():
         os.makedirs(pytorch_models_path, exist_ok=True)
 
         if args.train:
+            training_input_dir = "./TRAINING_INPUT"
             from PyTorchImageQualityTrainer import PyTorchImageQualityTrainer
-            trainer = PyTorchImageQualityTrainer(root_dir='.')
+            trainer = PyTorchImageQualityTrainer(root_dir = training_input_dir)
             trainer.load_dataset()
             trainer.initialize_model()
             trainer.train(epochs=args.epochs)
@@ -51,7 +52,6 @@ def main():
 
             # Save results to file
             predictor.save_results(results, "output_dict.json")
-
         else:
             raise ValueError("Specify either --train or --predict for PyTorch.")
 
