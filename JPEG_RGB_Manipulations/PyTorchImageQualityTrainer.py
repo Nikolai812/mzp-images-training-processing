@@ -1,34 +1,11 @@
-import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 from torchvision import transforms
-from PIL import Image
+from color_dataset import ColorDataset
 
 class PyTorchImageQualityTrainer:
-    class ColorDataset(Dataset):
-        def __init__(self, root_dir, transform=None):
-            self.root_dir = root_dir
-            self.transform = transform
-            self.classes = ['R', 'G', 'B']
-            self.class_to_idx = {cls_name: i for i, cls_name in enumerate(self.classes)}
-            self.images = []
-            for cls_name in self.classes:
-                cls_dir = os.path.join(self.root_dir, cls_name)
-                for img_name in os.listdir(cls_dir):
-                    self.images.append((os.path.join(cls_dir, img_name), self.class_to_idx[cls_name]))
-
-        def __len__(self):
-            return len(self.images)
-
-        def __getitem__(self, idx):
-            img_path, label = self.images[idx]
-            image = Image.open(img_path).convert('RGB')
-            if self.transform:
-                image = self.transform(image)
-            return image, label
-
     class ColorCNN(nn.Module):
         def __init__(self):
             super(PyTorchImageQualityTrainer.ColorCNN, self).__init__()
@@ -46,7 +23,7 @@ class PyTorchImageQualityTrainer:
             x = self.fc2(x)
             return x
 
-    def __init__(self, root_dir='.'):
+    def __init__(self, root_dir='./TRAINING_INPUT'):
         self.root_dir = root_dir
         self.transform = transforms.Compose([
             transforms.Resize((256, 256)),
@@ -59,7 +36,7 @@ class PyTorchImageQualityTrainer:
         self.optimizer = None
 
     def load_dataset(self):
-        self.dataset = self.ColorDataset(root_dir=self.root_dir, transform=self.transform)
+        self.dataset = ColorDataset(root_dir=self.root_dir, transform=self.transform, is_training=True)
         self.dataloader = DataLoader(self.dataset, batch_size=32, shuffle=True)
 
     def initialize_model(self):
@@ -82,6 +59,6 @@ class PyTorchImageQualityTrainer:
                     print(f'Epoch [{epoch+1}/{epochs}], Step [{i+1}/{len(self.dataloader)}], Loss: {loss.item():.4f}')
         print("Training complete!")
 
-    # wrapper for a torch.save
     def save(self, model_filename):
         torch.save(self.model.state_dict(), model_filename)
+        print(f"Model saved to {model_filename}")

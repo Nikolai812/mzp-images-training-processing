@@ -1,27 +1,12 @@
-import os
 import torch
-from torchvision import transforms
-from PyTorchImageQualityTrainer import PyTorchImageQualityTrainer
-from PIL import Image
+import os
 import json
+from torchvision import transforms
+from color_dataset import ColorDataset
 
 class PyTorchQualityPredictor:
-    class ColorDataset:
-        def __init__(self, image_paths, transform=None):
-            self.image_paths = image_paths
-            self.transform = transform
-
-        def __len__(self):
-            return len(self.image_paths)
-
-        def __getitem__(self, idx):
-            img_path = self.image_paths[idx]
-            image = Image.open(img_path).convert('RGB')
-            if self.transform:
-                image = self.transform(image)
-            return image, img_path
-
     def __init__(self, model_path):
+        from PyTorchImageQualityTrainer import PyTorchImageQualityTrainer
         self.model = PyTorchImageQualityTrainer.ColorCNN()
         self.model.load_state_dict(torch.load(model_path))
         self.model.eval()
@@ -31,8 +16,8 @@ class PyTorchQualityPredictor:
         ])
         self.classes = ['R', 'G', 'B']
 
-    def predict(self, image_paths):
-        dataset = self.ColorDataset(image_paths, transform=self.transform)
+    def predict(self, input_dir='./RAW_INPUT'):
+        dataset = ColorDataset(root_dir=input_dir, transform=self.transform, is_training=False)
         results = {}
         with torch.no_grad():
             for image, img_path in dataset:
@@ -47,26 +32,3 @@ class PyTorchQualityPredictor:
         with open(output_file, 'w') as f:
             json.dump(results, f, indent=4)
         print(f"Results saved to {output_file}")
-
-# Example usage
-if __name__ == "__main__":
-    # Path to your trained model
-    model_path = "./MODELS/PYTORCH/model.pth"
-
-    # Directory containing new images to classify
-    input_dir = "./RAW_INPUT"
-    image_paths = [os.path.join(input_dir, f) for f in os.listdir(input_dir) if f.lower().endswith('.jpg')]
-
-    # Initialize predictor
-    predictor = PyTorchQualityPredictor(model_path)
-
-    # Predict main colors
-    results = predictor.predict(image_paths)
-
-    # Print results
-    print("Classification results:")
-    for filename, main_color in results.items():
-        print(f"{filename}: {main_color}")
-
-    # Save results to file
-    predictor.save_results(results, "output_dict.json")

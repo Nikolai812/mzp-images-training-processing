@@ -19,9 +19,9 @@ def main():
         os.makedirs(pytorch_models_path, exist_ok=True)
 
         if args.train:
-            training_input_dir = "./TRAINING_INPUT"
             from PyTorchImageQualityTrainer import PyTorchImageQualityTrainer
-            trainer = PyTorchImageQualityTrainer(root_dir = training_input_dir)
+            training_input_dir = "./TRAINING_INPUT"
+            trainer = PyTorchImageQualityTrainer(root_dir=training_input_dir)
             trainer.load_dataset()
             trainer.initialize_model()
             trainer.train(epochs=args.epochs)
@@ -31,19 +31,16 @@ def main():
 
         elif args.predict:
             from PyTorchQualityPredictor import PyTorchQualityPredictor
-
             # Path to your trained model
-            model_path = "./MODELS/PYTORCH/model.pth"
+            model_path = os.path.join(models_dir, 'PYTORCH', args.model_path)
+            #"./MODELS/PYTORCH/model.pth"
 
             # Directory containing new images to classify
             input_dir = "./RAW_INPUT"
-            image_paths = [os.path.join(input_dir, f) for f in os.listdir(input_dir) if f.lower().endswith('.jpg')]
-
-            # Initialize predictor
-            predictor = PyTorchQualityPredictor(model_path)
-
-            # Predict main colors
-            results = predictor.predict(image_paths)
+            model_filename = model_path
+            predictor = PyTorchQualityPredictor(model_path=model_filename)
+            results = predictor.predict(input_dir=input_dir)
+            predictor.save_results(results, "output_dict.json")
 
             # Print results
             print("Classification results:")
