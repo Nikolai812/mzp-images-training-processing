@@ -6,9 +6,10 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 from color_dataset import ColorDataset
 import json
-from PIL import Image
+from llm_runner import LLMRunner
 
-class PyTorchManager:
+
+class PyTorchManager(LLMRunner):
     class ColorCNN(nn.Module):
         def __init__(self):
             super(PyTorchManager.ColorCNN, self).__init__()
