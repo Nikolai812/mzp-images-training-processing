@@ -1,24 +1,85 @@
 import os
-from tensorflow.keras import models
-from TensorFlowImageQualityTrainer import TensorFlowImageQualityTrainer
+import tensorflow as tf
+from tensorflow.keras import layers, models
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import json
+import numpy as np
+from PIL import Image
 from llm_runner import LLMRunner
 
 class TensorFlowManager(LLMRunner):
-    def __init__(self, root_dir='.'):
+    def __init__(self, root_dir='./TRAINING_INPUT'):
         self.root_dir = root_dir
-        self.trainer = TensorFlowImageQualityTrainer(root_dir=self.root_dir)
+        self.model = None
+        self.classes = ['R', 'G', 'B']
 
-    def train(self, epochs, model_path):
-        self.trainer.define_data_generators()
-        self.trainer.define_and_compile_model()
-        self.trainer.train(epochs=epochs)
-        self.trainer.model.save(model_path)
-        print(f"TensorFlow model saved to {model_path}")
+    def define_and_compile_model(self):
+        self.model = models.Sequential([
+            layers.Conv2D(16, (3, 3), activation='relu', input_shape=(256, 256, 3)),
+            layers.MaxPooling2D((2, 2)),
+            layers.Conv2D(32, (3, 3), activation='relu'),
+            layers.MaxPooling2D((2, 2)),
+            layers.Flatten(),
+            layers.Dense(128, activation='relu'),
+            layers.Dense(3, activation='softmax')
+        ])
+        self.model.compile(optimizer='adam',
+                           loss='categorical_crossentropy',
+                           metrics=['accuracy'])
 
-    def predict(self, model_path):
-        self.trainer.model = models.load_model(model_path)
-        print(f"TensorFlow model loaded from {model_path}")
+    def define_data_generators(self):
+        self.train_datagen = ImageDataGenerator(rescale=1./255)
+        self.train_generator = self.train_datagen.flow_from_directory(
+            self.root_dir,
+            target_size=(256, 256),
+            batch_size=32,
+            class_mode='categorical',
+            classes=self.classes
+        )
 
-        # Add prediction logic here (e.g., call a prediction function)
+    def train(self, epochs=10, model_path='model.h5'):
+        if not self.model or not hasattr(self, 'train_generator'):
+            raise ValueError("Model or data generator not initialized. Call define_and_compile_model() and define_data_generators() first.")
 
-        # Add prediction logic here
+        self.model.fit(
+            self.train_generator,
+            epochs=epochs,
+            steps_per_epoch=len(self.train_generator)
+        )
+        print("Training complete!")
+        self.save(model_path)
+
+    def save(self, model_path):
+        self.model.save(model_path)
+        print(f"Model saved to {model_path}")
+
+    def load_model(self, model_path):
+        self.model = models.load_model(model_path)
+        print(f"Model loaded from {model_path}")
+
+    def predict(self, input_dir='./RAW_INPUT', output_file='output_dict.json'):
+        if not self.model:
+            raise ValueError("Model not loaded. Call load_model() first.")
+
+        results = {}
+        for img_name in os.listdir(input_dir):
+            if img_name.lower().endswith('.jpg'):
+                img_path = os.path.join(input_dir, img_name)
+                img = Image.open(img_path)
+                img = img.resize((256, 256))
+                img_array = tf.keras.preprocessing.image.img_to_array(img)
+                img_array = tf.expand_dims(img_array, 0)  # Create batch axis
+                img_array /= 255.0  # Normalize
+
+                predictions = self.model.predict(img_array)
+                predicted_class_idx = tf.argmax(predictions[0]).numpy()
+                main_color = self.classes[predicted_class_idx]
+                results[img_name] = main_color
+
+        self.save_results(results, output_file)
+        return results
+
+    def save_results(self, results, output_file):
+        with open(output_file, 'w') as f:
+            json.dump(results, f, indent=4)
+        print(f"Results saved to {output_file}")

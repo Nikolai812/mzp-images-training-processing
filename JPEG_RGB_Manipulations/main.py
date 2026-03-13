@@ -37,26 +37,22 @@ def main():
             raise ValueError("Specify either --train or --predict for PyTorch.")
 
     elif args.framework == "tensorflow":
-        from tensorflow.keras import models
-        from TensorFlowImageQualityTrainer import TensorFlowImageQualityTrainer
-        trainer = TensorFlowImageQualityTrainer(root_dir='.')
-
+        from tensorflow_manager import TensorFlowManager
+        manager = TensorFlowManager(root_dir='./TRAINING_INPUT')
         if args.train:
-            trainer.define_data_generators()
-            trainer.define_and_compile_model()
-            trainer.train(epochs=args.epochs)
-            trainer.model.save(args.model_path)
-            print(f"TensorFlow model saved to {args.model_path}")
-
+            manager.define_data_generators()
+            manager.define_and_compile_model()
+            tensorflow_subdir = 'TENSORFLOW'
+            tensorflow_models_path = os.path.join(models_dir, tensorflow_subdir)
+            os.makedirs(tensorflow_models_path, exist_ok=True)
+            model_filename = os.path.join(tensorflow_models_path, args.model_path)
+            manager.train(epochs=args.epochs, model_path=model_filename)
         elif args.predict:
-            trainer.model = models.load_model(args.model_path)
-            print(f"TensorFlow model loaded from {args.model_path}")
-
-            # Add prediction logic here (e.g., call a prediction function)
-
+            model_filename = os.path.join(models_dir, 'TENSORFLOW', args.model_path)
+            manager.load_model(model_filename)
+            results = manager.predict(input_dir='./RAW_INPUT', output_file="output_dict_tf.json")
         else:
             raise ValueError("Specify either --train or --predict for TensorFlow.")
-
 
 if __name__ == "__main__":
     main()
