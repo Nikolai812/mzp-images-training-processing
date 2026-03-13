@@ -14,41 +14,25 @@ def main():
     os.makedirs(models_dir, exist_ok=True)
 
     if args.framework == "pytorch":
-        pytorch_subdir = 'PYTORCH'
-        pytorch_models_path = os.path.join(models_dir, pytorch_subdir)
-        os.makedirs(pytorch_models_path, exist_ok=True)
+        from pytorch_manager import PyTorchManager
+        manager = PyTorchManager(root_dir='./TRAINING_INPUT')
 
         if args.train:
-            from PyTorchImageQualityTrainer import PyTorchImageQualityTrainer
-            training_input_dir = "./TRAINING_INPUT"
-            trainer = PyTorchImageQualityTrainer(root_dir=training_input_dir)
-            trainer.load_dataset()
-            trainer.initialize_model()
-            trainer.train(epochs=args.epochs)
+            manager.load_dataset()
+            manager.initialize_model()
+            manager.train(epochs=args.epochs)
+            pytorch_subdir = 'PYTORCH'
+            pytorch_models_path = os.path.join(models_dir, pytorch_subdir)
+            os.makedirs(pytorch_models_path, exist_ok=True)
             model_filename = os.path.join(pytorch_models_path, args.model_path)
-            trainer.save(model_filename)
-            print(f"PyTorch model saved to {model_filename}")
+            manager.save(model_filename)
 
         elif args.predict:
-            from PyTorchQualityPredictor import PyTorchQualityPredictor
-            # Path to your trained model
-            model_path = os.path.join(models_dir, 'PYTORCH', args.model_path)
-            #"./MODELS/PYTORCH/model.pth"
+            model_filename = os.path.join(models_dir, 'PYTORCH', args.model_path)
+            manager.load_model(model_filename)
+            results = manager.predict(input_dir='./RAW_INPUT')
+            manager.save_results(results, "output_dict.json")
 
-            # Directory containing new images to classify
-            input_dir = "./RAW_INPUT"
-            model_filename = model_path
-            predictor = PyTorchQualityPredictor(model_path=model_filename)
-            results = predictor.predict(input_dir=input_dir)
-            predictor.save_results(results, "output_dict.json")
-
-            # Print results
-            print("Classification results:")
-            for filename, main_color in results.items():
-                print(f"{filename}: {main_color}")
-
-            # Save results to file
-            predictor.save_results(results, "output_dict.json")
         else:
             raise ValueError("Specify either --train or --predict for PyTorch.")
 
@@ -72,6 +56,7 @@ def main():
 
         else:
             raise ValueError("Specify either --train or --predict for TensorFlow.")
+
 
 if __name__ == "__main__":
     main()
