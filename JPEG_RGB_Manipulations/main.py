@@ -31,7 +31,7 @@ def main():
             model_filename = os.path.join(models_dir, 'PYTORCH', args.model_path)
             manager.load_model(model_filename)
             results = manager.predict(input_dir='./RAW_INPUT')
-            manager.save_results(results, "output_dict.json")
+            manager.save_results(results, "output_dict_pt.json")
 
         else:
             raise ValueError("Specify either --train or --predict for PyTorch.")
