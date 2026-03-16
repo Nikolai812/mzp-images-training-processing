@@ -3,13 +3,16 @@ import tensorflow as tf
 from tensorflow.keras import layers, models
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import json
-import numpy as np
+#import numpy as np
 from PIL import Image
 from llm_runner import LLMRunner
 
 class TensorFlowManager(LLMRunner):
-    def __init__(self, root_dir='./TRAINING_INPUT'):
-        self.root_dir = root_dir
+    def __init__(self, config):
+        self.root_dir = config['training_input']
+        self.raw_input_dir = config['raw_input']
+        self.models_dir = config['models']
+        self.output_json = config['output_json']
         self.model = None
         self.classes = ['R', 'G', 'B']
 
@@ -49,22 +52,24 @@ class TensorFlowManager(LLMRunner):
         print("Training complete!")
         self.save(model_path)
 
-    def save(self, model_path):
+    def save(self, model_filename):
+        model_path = os.path.join(self.models_dir, model_filename)
         self.model.save(model_path)
         print(f"Model saved to {model_path}")
 
-    def load_model(self, model_path):
+    def load_model(self, model_filename):
+        model_path = os.path.join(self.models_dir, model_filename)
         self.model = models.load_model(model_path)
         print(f"Model loaded from {model_path}")
 
-    def predict(self, input_dir='./RAW_INPUT', output_file='output_dict.json'):
+    def predict(self):
         if not self.model:
             raise ValueError("Model not loaded. Call load_model() first.")
 
         results = {}
-        for img_name in os.listdir(input_dir):
+        for img_name in os.listdir(self.raw_input_dir):
             if img_name.lower().endswith('.jpg'):
-                img_path = os.path.join(input_dir, img_name)
+                img_path = os.path.join(self.raw_input_dir, img_name)
                 img = Image.open(img_path)
                 img = img.resize((256, 256))
                 img_array = tf.keras.preprocessing.image.img_to_array(img)
@@ -76,10 +81,10 @@ class TensorFlowManager(LLMRunner):
                 main_color = self.classes[predicted_class_idx]
                 results[img_name] = main_color
 
-        self.save_results(results, output_file)
+        self.save_results(results)
         return results
 
-    def save_results(self, results, output_file):
-        with open(output_file, 'w') as f:
+    def save_results(self, results):
+        with open(self.output_json, 'w') as f:
             json.dump(results, f, indent=4)
-        print(f"Results saved to {output_file}")
+        print(f"Results saved to {self.output_json}")

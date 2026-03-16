@@ -8,7 +8,6 @@ from color_dataset import ColorDataset
 import json
 from llm_runner import LLMRunner
 
-
 class PyTorchManager(LLMRunner):
     class ColorCNN(nn.Module):
         def __init__(self):
@@ -27,8 +26,11 @@ class PyTorchManager(LLMRunner):
             x = self.fc2(x)
             return x
 
-    def __init__(self, root_dir='./TRAINING_INPUT'):
-        self.root_dir = root_dir
+    def __init__(self, config):
+        self.root_dir = config['training_input']
+        self.raw_input_dir = config['raw_input']
+        self.models_dir = config['models']
+        self.output_json = config['output_json']
         self.transform = transforms.Compose([
             transforms.Resize((256, 256)),
             transforms.ToTensor(),
@@ -49,7 +51,7 @@ class PyTorchManager(LLMRunner):
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
 
-    def train(self, epochs=10):
+    def train(self, epochs=10, model_path='model.pth'):
         if not self.dataloader or not self.model or not self.optimizer:
             raise ValueError("Dataset, model, or optimizer not initialized. Call load_dataset() and initialize_model() first.")
 
@@ -63,19 +65,22 @@ class PyTorchManager(LLMRunner):
                 if i % 10 == 0:
                     print(f'Epoch [{epoch+1}/{epochs}], Step [{i+1}/{len(self.dataloader)}], Loss: {loss.item():.4f}')
         print("Training complete!")
+        self.save(model_path)
 
     def save(self, model_filename):
-        torch.save(self.model.state_dict(), model_filename)
-        print(f"Model saved to {model_filename}")
+        model_path = os.path.join(self.models_dir, model_filename)
+        torch.save(self.model.state_dict(), model_path)
+        print(f"Model saved to {model_path}")
 
     def load_model(self, model_filename):
+        model_path = os.path.join(self.models_dir, model_filename)
         self.model = self.ColorCNN()
-        self.model.load_state_dict(torch.load(model_filename))
+        self.model.load_state_dict(torch.load(model_path))
         self.model.eval()
-        print(f"Model loaded from {model_filename}")
+        print(f"Model loaded from {model_path}")
 
-    def predict(self, input_dir='./RAW_INPUT'):
-        dataset = ColorDataset(root_dir=input_dir, transform=self.transform, is_training=False)
+    def predict(self):
+        dataset = ColorDataset(root_dir=self.raw_input_dir, transform=self.transform, is_training=False)
         results = {}
         with torch.no_grad():
             for image, img_path in dataset:
@@ -84,9 +89,11 @@ class PyTorchManager(LLMRunner):
                 _, predicted = torch.max(outputs, 1)
                 main_color = self.classes[predicted[0]]
                 results[os.path.basename(img_path)] = main_color
+
+        self.save_results(results)
         return results
 
-    def save_results(self, results, output_file):
-        with open(output_file, 'w') as f:
+    def save_results(self, results):
+        with open(self.output_json, 'w') as f:
             json.dump(results, f, indent=4)
-        print(f"Results saved to {output_file}")
+        print(f"Results saved to {self.output_json}")

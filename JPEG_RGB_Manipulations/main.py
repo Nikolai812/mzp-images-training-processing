@@ -1,5 +1,5 @@
 import argparse
-import os
+from config_reader import ConfigReader
 
 def main():
     parser = argparse.ArgumentParser(description="Train or load a model for image color classification.")
@@ -10,47 +10,34 @@ def main():
     parser.add_argument("-m", "--model_path", type=str, default="model.pth", help="Path to save/load the model.")
     args = parser.parse_args()
 
-    models_dir = "./MODELS/"
-    os.makedirs(models_dir, exist_ok=True)
+    config_reader = ConfigReader()
+    config_reader.ensure_directories_exist()
 
     if args.framework == "pytorch":
         from pytorch_manager import PyTorchManager
-        manager = PyTorchManager(root_dir='./TRAINING_INPUT')
-
+        config = config_reader.get_pytorch_config()
+        manager = PyTorchManager(config)
         if args.train:
             manager.load_dataset()
             manager.initialize_model()
-            manager.train(epochs=args.epochs)
-            pytorch_subdir = 'PYTORCH'
-            pytorch_models_path = os.path.join(models_dir, pytorch_subdir)
-            os.makedirs(pytorch_models_path, exist_ok=True)
-            model_filename = os.path.join(pytorch_models_path, args.model_path)
-            manager.save(model_filename)
-
+            manager.train(epochs=args.epochs, model_path=args.model_path)
         elif args.predict:
-            model_filename = os.path.join(models_dir, 'PYTORCH', args.model_path)
-            manager.load_model(model_filename)
-            results = manager.predict(input_dir='./RAW_INPUT')
-            manager.save_results(results, "output_dict_pt.json")
-
+            manager.load_model(args.model_path)
+            manager.predict()
         else:
             raise ValueError("Specify either --train or --predict for PyTorch.")
 
     elif args.framework == "tensorflow":
         from tensorflow_manager import TensorFlowManager
-        manager = TensorFlowManager(root_dir='./TRAINING_INPUT')
+        config = config_reader.get_tensorflow_config()
+        manager = TensorFlowManager(config)
         if args.train:
             manager.define_data_generators()
             manager.define_and_compile_model()
-            tensorflow_subdir = 'TENSORFLOW'
-            tensorflow_models_path = os.path.join(models_dir, tensorflow_subdir)
-            os.makedirs(tensorflow_models_path, exist_ok=True)
-            model_filename = os.path.join(tensorflow_models_path, args.model_path)
-            manager.train(epochs=args.epochs, model_path=model_filename)
+            manager.train(epochs=args.epochs, model_path=args.model_path)
         elif args.predict:
-            model_filename = os.path.join(models_dir, 'TENSORFLOW', args.model_path)
-            manager.load_model(model_filename)
-            results = manager.predict(input_dir='./RAW_INPUT', output_file="output_dict_tf.json")
+            manager.load_model(args.model_path)
+            manager.predict()
         else:
             raise ValueError("Specify either --train or --predict for TensorFlow.")
 
