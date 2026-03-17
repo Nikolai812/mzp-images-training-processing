@@ -11,7 +11,8 @@ class ConfigReader:
             'training_input': self.config['PYTORCH']['training_input'],
             'raw_input': self.config['PYTORCH']['raw_input'],
             'models': self.config['PYTORCH']['models'],
-            'output_json': self.config['PYTORCH']['output_json']
+            'output_json': self.config['PYTORCH']['output_json'],
+            'training_categories': self.config['PYTORCH']['training_categories']
         }
 
     def get_tensorflow_config(self):
@@ -19,7 +20,8 @@ class ConfigReader:
             'training_input': self.config['TENSORFLOW']['training_input'],
             'raw_input': self.config['TENSORFLOW']['raw_input'],
             'models': self.config['TENSORFLOW']['models'],
-            'output_json': self.config['TENSORFLOW']['output_json']
+            'output_json': self.config['TENSORFLOW']['output_json'],
+            'training_categories': self.config['PYTORCH']['training_categories']
         }
 
     def ensure_directories_exist(self):

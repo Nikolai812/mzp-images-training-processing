@@ -4,7 +4,7 @@ from torchvision import transforms
 from PIL import Image
 
 class ColorDataset(Dataset):
-    def __init__(self, root_dir, transform=None, is_training=True):
+    def __init__(self, root_dir, transform=None, is_training=True, training_classes=None):
         """
         Args:
             root_dir (str): Root directory containing images.
@@ -19,7 +19,7 @@ class ColorDataset(Dataset):
 
         if is_training:
             # For training: images are in R, G, B subdirectories
-            self.classes = ['R', 'G', 'B']
+            self.classes = training_classes
             self.class_to_idx = {cls_name: i for i, cls_name in enumerate(self.classes)}
             for cls_name in self.classes:
                 cls_dir = os.path.join(self.root_dir, cls_name)

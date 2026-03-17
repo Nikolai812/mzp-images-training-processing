@@ -1,3 +1,4 @@
+import ast
 import os
 import torch
 import torch.nn as nn
@@ -40,10 +41,11 @@ class PyTorchManager(LLMRunner):
         self.model = None
         self.criterion = None
         self.optimizer = None
-        self.classes = ['R', 'G', 'B']
+        self.classes = ast.literal_eval(config['training_categories'])
 
     def load_dataset(self):
-        self.dataset = ColorDataset(root_dir=self.root_dir, transform=self.transform, is_training=True)
+        self.dataset = ColorDataset(root_dir=self.root_dir, transform=self.transform,
+                                    is_training=True, training_classes = self.classes)
         self.dataloader = DataLoader(self.dataset, batch_size=32, shuffle=True)
 
     def initialize_model(self):

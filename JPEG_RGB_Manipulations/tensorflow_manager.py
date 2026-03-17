@@ -1,3 +1,4 @@
+import ast
 import os
 import tensorflow as tf
 from tensorflow.keras import layers, models
@@ -14,7 +15,7 @@ class TensorFlowManager(LLMRunner):
         self.models_dir = config['models']
         self.output_json = config['output_json']
         self.model = None
-        self.classes = ['R', 'G', 'B']
+        self.classes = ast.literal_eval(config['training_categories'])
 
     def define_and_compile_model(self):
         self.model = models.Sequential([
