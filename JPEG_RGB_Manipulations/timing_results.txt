@@ -1,7 +1,0 @@
-    Work notebook:
-15.03
-pt_train: 12 sec
-tf_train: 14 sec
-
-pt_predict: 4 sec
-tf_predict: 7 sed
