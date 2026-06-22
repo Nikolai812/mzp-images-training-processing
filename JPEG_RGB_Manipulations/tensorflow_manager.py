@@ -1,4 +1,3 @@
-import ast
 import os
 import tensorflow as tf
 from tensorflow.keras import layers, models
@@ -10,12 +9,7 @@ from llm_runner import LLMRunner
 
 class TensorFlowManager(LLMRunner):
     def __init__(self, config):
-        self.root_dir = config['training_input']
-        self.raw_input_dir = config['raw_input']
-        self.models_dir = config['models']
-        self.output_json = config['output_json']
-        self.model = None
-        self.classes = ast.literal_eval(config['training_categories'])
+        super().__init__(config)
 
     def define_and_compile_model(self):
         self.model = models.Sequential([

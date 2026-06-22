@@ -1,4 +1,3 @@
-import ast
 import os
 import torch
 import torch.nn as nn
@@ -28,10 +27,7 @@ class PyTorchManager(LLMRunner):
             return x
 
     def __init__(self, config):
-        self.root_dir = config['training_input']
-        self.raw_input_dir = config['raw_input']
-        self.models_dir = config['models']
-        self.output_json = config['output_json']
+        super().__init__(config)
         self.transform = transforms.Compose([
             transforms.Resize((256, 256)),
             transforms.ToTensor(),
@@ -41,7 +37,6 @@ class PyTorchManager(LLMRunner):
         self.model = None
         self.criterion = None
         self.optimizer = None
-        self.classes = ast.literal_eval(config['training_categories'])
 
     def load_dataset(self):
         self.dataset = ColorDataset(root_dir=self.root_dir, transform=self.transform,
