@@ -11,6 +11,11 @@ class ConfigReader:
             'training_input': self.config['PYTORCH']['training_input'],
             'raw_input': self.config['PYTORCH']['raw_input'],
             'models': self.config['PYTORCH']['models'],
+            'model_file': self.config['PYTORCH']['model_file'],
+            'predict_from_model_file': self.config['PYTORCH'].get(
+            'predict_from_model_file',
+            ''),
+            'epochs': self.config['PYTORCH']['epochs'],
             'output_json': self.config['PYTORCH']['output_json'],
             'training_categories': self.config['PYTORCH']['training_categories']
         }
@@ -20,6 +25,11 @@ class ConfigReader:
             'training_input': self.config['TENSORFLOW']['training_input'],
             'raw_input': self.config['TENSORFLOW']['raw_input'],
             'models': self.config['TENSORFLOW']['models'],
+            'model_file' : self.config['TENSORFLOW']['model_file'],
+            'predict_from_model_file': self.config['TENSORFLOW'].get(
+            'predict_from_model_file',
+            ''),
+            'epochs': self.config['TENSORFLOW']['epochs'],
             'output_json': self.config['TENSORFLOW']['output_json'],
             'training_categories': self.config['PYTORCH']['training_categories']
         }
