@@ -42,7 +42,6 @@ def main():
         manager = PyTorchManager(config)
 
         model_file = config["model_file"]
-        epochs = int(config["epochs"])
 
         predict_model_file = config.get(
             "predict_from_model_file",
@@ -56,8 +55,7 @@ def main():
         )
 
         if args.train:
-            manager.load_dataset()
-            manager.initialize_model()
+            manager.pre_train()
             manager.train()
 
         elif args.predict:
@@ -76,7 +74,6 @@ def main():
         manager = TensorFlowManager(config)
 
         model_file = config["model_file"]
-        epochs = int(config["epochs"])
 
         predict_model_file = config.get(
             "predict_from_model_file",
@@ -90,9 +87,7 @@ def main():
         )
 
         if args.train:
-            manager.define_data_generators()
-            manager.define_and_compile_model()
-
+            manager.pre_train()
             manager.train()
 
         elif args.predict:

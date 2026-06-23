@@ -3,15 +3,25 @@ import ast
 
 class LLMRunner(ABC):
     @abstractmethod
+    def pre_train(self):
+        pass
+
+    @abstractmethod
     def train(self):
+        pass
+
+    # Saves the model to file after training. File name is to be specified in config
+    @abstractmethod
+    def save(self):
+        pass
+
+    # Loads trained model to make predictions
+    @abstractmethod
+    def load_model(self, model_filename):
         pass
 
     @abstractmethod
     def predict(self, model_path):
-        pass
-
-    @abstractmethod
-    def load_model(self, model_filename):
         pass
 
     def __init__(self, runner_config):

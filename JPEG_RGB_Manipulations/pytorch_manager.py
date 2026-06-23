@@ -48,6 +48,10 @@ class PyTorchManager(LLMRunner):
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
 
+    def pre_train(self):
+        self.load_dataset()
+        self.initialize_model()
+
     def train(self):
         epochs = int(self.runner_config.get('epochs', 10))
         if not self.dataloader or not self.model or not self.optimizer:

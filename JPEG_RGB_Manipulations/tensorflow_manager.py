@@ -35,6 +35,10 @@ class TensorFlowManager(LLMRunner):
             classes=self.classes
         )
 
+    def pre_train(self):
+        self.define_data_generators()
+        self.define_and_compile_model()
+
     def train(self):
         epochs = int(self.runner_config.get('epochs', 10))
         if not self.model or not hasattr(self, 'train_generator'):
