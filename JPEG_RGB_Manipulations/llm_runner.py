@@ -3,11 +3,15 @@ import ast
 
 class LLMRunner(ABC):
     @abstractmethod
-    def train(self, epochs, model_path):
+    def train(self):
         pass
 
     @abstractmethod
     def predict(self, model_path):
+        pass
+
+    @abstractmethod
+    def load_model(self, model_filename):
         pass
 
     def __init__(self, runner_config):

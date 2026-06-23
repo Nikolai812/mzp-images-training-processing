@@ -58,10 +58,7 @@ def main():
         if args.train:
             manager.load_dataset()
             manager.initialize_model()
-            manager.train(
-                epochs=epochs,
-                model_path=model_file
-            )
+            manager.train()
 
         elif args.predict:
             manager.load_model(prediction_model)
@@ -96,10 +93,7 @@ def main():
             manager.define_data_generators()
             manager.define_and_compile_model()
 
-            manager.train(
-                epochs=epochs,
-                model_path=model_file
-            )
+            manager.train()
 
         elif args.predict:
             manager.load_model(prediction_model)

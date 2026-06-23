@@ -35,7 +35,8 @@ class TensorFlowManager(LLMRunner):
             classes=self.classes
         )
 
-    def train(self, epochs=10, model_path='model.h5'):
+    def train(self):
+        epochs = int(self.runner_config.get('epochs', 10))
         if not self.model or not hasattr(self, 'train_generator'):
             raise ValueError("Model or data generator not initialized. Call define_and_compile_model() and define_data_generators() first.")
 
@@ -45,9 +46,10 @@ class TensorFlowManager(LLMRunner):
             steps_per_epoch=len(self.train_generator)
         )
         print("Training complete!")
-        self.save(model_path)
+        self.save()
 
-    def save(self, model_filename):
+    def save(self):
+        model_filename = self.runner_config.get("model_file", 'model.h5')
         model_path = os.path.join(self.models_dir, model_filename)
         self.model.save(model_path)
         print(f"Model saved to {model_path}")

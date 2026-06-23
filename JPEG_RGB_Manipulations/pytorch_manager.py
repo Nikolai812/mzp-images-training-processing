@@ -48,7 +48,8 @@ class PyTorchManager(LLMRunner):
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
 
-    def train(self, epochs=10, model_path='model.pth'):
+    def train(self):
+        epochs = int(self.runner_config.get('epochs', 10))
         if not self.dataloader or not self.model or not self.optimizer:
             raise ValueError("Dataset, model, or optimizer not initialized. Call load_dataset() and initialize_model() first.")
 
@@ -62,12 +63,14 @@ class PyTorchManager(LLMRunner):
                 if i % 10 == 0:
                     print(f'Epoch [{epoch+1}/{epochs}], Step [{i+1}/{len(self.dataloader)}], Loss: {loss.item():.4f}')
         print("Training complete!")
-        self.save(model_path)
+        self.save()
 
-    def save(self, model_filename):
+    def save(self):
+        model_filename = self.runner_config.get("model_file", 'model.pth')
         model_path = os.path.join(self.models_dir, model_filename)
         torch.save(self.model.state_dict(), model_path)
         print(f"Model saved to {model_path}")
+
 
     def load_model(self, model_filename):
         model_path = os.path.join(self.models_dir, model_filename)
