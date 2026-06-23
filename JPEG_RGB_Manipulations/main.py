@@ -35,37 +35,14 @@ def main():
     config_reader = ConfigReader()
     config_reader.ensure_directories_exist()
 
+    #
+    # Framework-specific initialization only
+    #
     if args.framework == "pytorch":
         from pytorch_manager import PyTorchManager
 
         config = config_reader.get_pytorch_config()
         manager = PyTorchManager(config)
-
-        model_file = config["model_file"]
-
-        predict_model_file = config.get(
-            "predict_from_model_file",
-            ""
-        ).strip()
-
-        prediction_model = (
-            predict_model_file
-            if predict_model_file
-            else model_file
-        )
-
-        if args.train:
-            manager.pre_train()
-            manager.train()
-
-        elif args.predict:
-            manager.load_model(prediction_model)
-            manager.predict()
-
-        else:
-            raise ValueError(
-                "Specify either --train or --predict for PyTorch."
-            )
 
     elif args.framework == "tensorflow":
         from tensorflow_manager import TensorFlowManager
@@ -73,31 +50,37 @@ def main():
         config = config_reader.get_tensorflow_config()
         manager = TensorFlowManager(config)
 
-        model_file = config["model_file"]
+    else:
+        raise ValueError("Unknown framework: {}".format(args.framework))
 
-        predict_model_file = config.get(
-            "predict_from_model_file",
-            ""
-        ).strip()
+    #
+    # Common logic
+    #
+    model_file = config["model_file"]
 
-        prediction_model = (
-            predict_model_file
-            if predict_model_file
-            else model_file
+    predict_model_file = config.get(
+        "predict_from_model_file",
+        ""
+    ).strip()
+
+    prediction_model = (
+        predict_model_file
+        if predict_model_file
+        else model_file
+    )
+
+    if args.train:
+        manager.pre_train()
+        manager.train()
+
+    elif args.predict:
+        manager.load_model(prediction_model)
+        manager.predict()
+
+    else:
+        raise ValueError(
+            f"Specify either --train or --predict for {args.framework}."
         )
-
-        if args.train:
-            manager.pre_train()
-            manager.train()
-
-        elif args.predict:
-            manager.load_model(prediction_model)
-            manager.predict()
-
-        else:
-            raise ValueError(
-                "Specify either --train or --predict for TensorFlow."
-            )
 
 
 if __name__ == "__main__":
