@@ -1,5 +1,27 @@
 import argparse
 from config_reader import ConfigReader
+from config_reader import Framework
+
+
+def build_framework_manager(framework_name, config_reader):
+    if framework_name == Framework.PYTORCH.name:
+        from pytorch_manager import PyTorchManager
+
+        config = config_reader.get_framework_config(Framework.PYTORCH)
+        manager = PyTorchManager(config)
+
+    elif framework_name == Framework.TENSORFLOW.name:
+        from tensorflow_manager import TensorFlowManager
+
+        config = config_reader.get_framework_config(Framework.TENSORFLOW)
+        manager = TensorFlowManager(config)
+
+    else:
+        raise ValueError(
+            f"Unsupported framework: {framework_name}"
+        )
+
+    return config, manager
 
 
 def main():
@@ -11,7 +33,7 @@ def main():
         "-f",
         "--framework",
         type=str,
-        choices=["pytorch", "tensorflow"],
+        choices=["PYTORCH", "TENSORFLOW"],
         required=True,
         help="Choose the framework: pytorch or tensorflow."
     )
@@ -38,42 +60,15 @@ def main():
     #
     # Framework-specific initialization only
     #
-    if args.framework == "pytorch":
-        from pytorch_manager import PyTorchManager
 
-        config = config_reader.get_pytorch_config()
-        manager = PyTorchManager(config)
-
-    elif args.framework == "tensorflow":
-        from tensorflow_manager import TensorFlowManager
-
-        config = config_reader.get_tensorflow_config()
-        manager = TensorFlowManager(config)
-
-    else:
-        raise ValueError("Unknown framework: {}".format(args.framework))
-
-    #
-    # Common logic
-    #
-    model_file = config["model_file"]
-
-    predict_model_file = config.get(
-        "predict_from_model_file",
-        ""
-    ).strip()
-
-    prediction_model = (
-        predict_model_file
-        if predict_model_file
-        else model_file
-    )
+    config, manager = build_framework_manager(args.framework, config_reader)
 
     if args.train:
         manager.pre_train()
         manager.train()
 
     elif args.predict:
+        prediction_model = config['predict_from_model_file']
         manager.load_model(prediction_model)
         manager.predict()
 
