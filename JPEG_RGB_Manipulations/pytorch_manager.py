@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import transforms
-from color_dataset import ColorDataset
+from rgb_dataset import RgbDataset
 import json
 from llm_runner import LLMRunner
 
@@ -39,8 +39,8 @@ class PyTorchManager(LLMRunner):
         self.optimizer = None
 
     def load_dataset(self):
-        self.dataset = ColorDataset(root_dir=self.root_dir, transform=self.transform,
-                                    is_training=True, training_classes = self.classes)
+        self.dataset = RgbDataset(root_dir=self.root_dir, transform=self.transform,
+                                  is_training=True, training_classes = self.classes)
         self.dataloader = DataLoader(self.dataset, batch_size=32, shuffle=True)
 
     def initialize_model(self):
@@ -84,7 +84,7 @@ class PyTorchManager(LLMRunner):
         print(f"Model loaded from {model_path}")
 
     def predict(self):
-        dataset = ColorDataset(root_dir=self.raw_input_dir, transform=self.transform, is_training=False)
+        dataset = RgbDataset(root_dir=self.raw_input_dir, transform=self.transform, is_training=False)
         results = {}
         with torch.no_grad():
             for image, img_path in dataset:
