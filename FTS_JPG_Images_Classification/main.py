@@ -3,22 +3,24 @@ from config_reader import ConfigReader
 from config_reader import Framework
 
 
-def build_framework_manager(framework_name, config_reader):
-    if framework_name == Framework.PYTORCH.name:
+def build_framework_manager(framework_value: str, config_reader):
+    # several configs nay use pytorch (for jpg, fts, diff categories)
+    if "PYTORCH" in framework_value:
         from pytorch_manager import PyTorchManager
-
-        config = config_reader.get_framework_config(Framework.PYTORCH)
+        print(f"Going to load PYTORCH for configuration: {framework_value}")
+        config = config_reader.get_framework_config(framework_value)
         manager = PyTorchManager(config)
 
-    elif framework_name == Framework.TENSORFLOW.name:
+    # several configs nay use tensorflow (for jpg, fts, diff categories)
+    elif "TENSORFLOW" in framework_value:
         from tensorflow_manager import TensorFlowManager
-
-        config = config_reader.get_framework_config(Framework.TENSORFLOW)
+        print(f"Going to load TENSORFLOW for configuration: {framework_value}")
+        config = config_reader.get_framework_config(framework_value)
         manager = TensorFlowManager(config)
 
     else:
         raise ValueError(
-            f"Unsupported framework: {framework_name}"
+            f"Unsupported framework: {framework_value}"
         )
 
     return config, manager
@@ -33,10 +35,13 @@ def main():
         "-f",
         "--framework",
         type=str,
-        choices=["PYTORCH", "TENSORFLOW"],
+        # Choice type may be removed in future to add configurations without hardcoding the choice options
+        #choices=["PYTORCH", "TENSORFLOW", "PYTORCH_FTS"],
+        choices=[f.value for f in Framework],
         required=True,
-        help="Choose the framework: pytorch or tensorflow."
+        help="Choose the framework-related configuratiom: pytorch or tensorflow and jpg/fts images. Configuration includes paths for training images and for images for predictions"
     )
+
 
     parser.add_argument(
         "-t",

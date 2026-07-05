@@ -6,6 +6,7 @@ from enum import Enum
 class Framework(Enum):
     PYTORCH = "PYTORCH"
     TENSORFLOW = "TENSORFLOW"
+    PYTORCH_FTS = "PYTORCH_FTS"
 
 
 class ConfigReader:
@@ -13,8 +14,8 @@ class ConfigReader:
         self.config = configparser.ConfigParser()
         self.config.read(config_file)
 
-    def get_framework_config(self, framework: Framework):
-        section = self.config[framework.value]
+    def get_framework_config(self, framework_value: str):
+        section = self.config[framework_value]
 
         model_file = section["model_file"]
 

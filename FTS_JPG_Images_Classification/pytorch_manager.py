@@ -5,6 +5,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from rgb_dataset import RgbDataset
+from fts_dataset import FtsDataset
 import json
 from llm_runner import LLMRunner
 
@@ -28,20 +29,54 @@ class PyTorchManager(LLMRunner):
 
     def __init__(self, config):
         super().__init__(config)
-        self.transform = transforms.Compose([
-            transforms.Resize((256, 256)),
-            transforms.ToTensor(),
-        ])
+
+        if self.runner_config["data_type"] == "jpg":
+            print("init PyTorchManager for JPG")
+            self.transform = transforms.Compose([
+                transforms.Resize((256, 256)),
+                transforms.ToTensor(),
+            ])
+        elif self.runner_config["data_type"] == "fts":
+            print("init PyTorchManager for FTS")
+            self.transform = transforms.Compose([
+                transforms.Resize((256, 256)),
+            ])
+        else:
+            raise NotImplementedError(f"unimplemented data type: {self.runner_config['data_type']}")
+
         self.dataset = None
         self.dataloader = None
         self.model = None
         self.criterion = None
         self.optimizer = None
 
+    def create_dataset(self, is_training):
+        data_type = self.runner_config.get("data_type", "jpg").lower()
+
+        if data_type == "jpg":
+            dataset_class = RgbDataset
+
+        elif data_type == "fts":
+            dataset_class = FtsDataset
+
+        else:
+            raise ValueError(f"Unsupported data type: {data_type}")
+
+        return dataset_class(
+            root_dir=self.root_dir if is_training else self.raw_input_dir,
+            transform=self.transform,
+            is_training=is_training,
+            training_classes=self.classes
+        )
+
     def load_dataset(self):
-        self.dataset = RgbDataset(root_dir=self.root_dir, transform=self.transform,
-                                  is_training=True, training_classes = self.classes)
-        self.dataloader = DataLoader(self.dataset, batch_size=32, shuffle=True)
+        self.dataset = self.create_dataset(is_training=True)
+        self.dataloader = DataLoader(
+            self.dataset,
+            batch_size=32,
+            shuffle=True
+        )
+
 
     def initialize_model(self):
         self.model = self.ColorCNN()
@@ -84,7 +119,8 @@ class PyTorchManager(LLMRunner):
         print(f"Model loaded from {model_path}")
 
     def predict(self):
-        dataset = RgbDataset(root_dir=self.raw_input_dir, transform=self.transform, is_training=False)
+        #dataset = RgbDataset(root_dir=self.raw_input_dir, transform=self.transform, is_training=False)
+        dataset = self.create_dataset(is_training=False)
         results = {}
         with torch.no_grad():
             for image, img_path in dataset:
