@@ -7,10 +7,15 @@ from configparser import ConfigParser
 from pathlib import Path
 import shutil
 
+import csv
 import json
 import logging
 from typing import Any
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 @dataclass
@@ -24,6 +29,8 @@ class FTSConfig:
     predicted_json: str
     calculated_json: str
     calculation_output: str
+    unified_tsv: str
+    summary_json: str
 
 
 def read_config(filename: str = "fts_config.ini") -> FTSConfig:
@@ -46,6 +53,8 @@ def read_config(filename: str = "fts_config.ini") -> FTSConfig:
         predicted_json=cfg.get("predicted_json", "predicted.json"),
         calculated_json=cfg.get("calculated_json", "calculatedjson"),
         calculation_output=cfg.get("calculation_output", "OUTPUTS/CALCULATION_FTS"),
+        unified_tsv=cfg.get("unified_tsv", "OUTPUTS/unified.tsv"),
+        summary_json=cfg.get("summary_json", "OUTPUTS/summary.json"),
     )
 
 def read_json_file(json_file: Path) -> Any | None:
@@ -106,6 +115,8 @@ def get_star_sources(
 
     return daofind(data - median)
 
+# Copies the file from fts input to classified folders
+# (expects that there should be  >= 3 classes)
 def copy_classified_files(config: FTSConfig, non_zero_stars: list[str], zero_stars_only_th10: list[str],
                           zero_stars_th5: list[str], calc_dir: Path) -> None:
     """
@@ -150,7 +161,8 @@ def copy_classified_files(config: FTSConfig, non_zero_stars: list[str], zero_sta
                 f"{src} -> {dst}"
             )
 
-
+# Precesses fts file with astropy to get stars and
+# to classify it according to category classes
 def process_fts_file(
     fts_file: Path,
     config: FTSConfig,
@@ -194,8 +206,8 @@ def process_fts_file(
     star_categories = config.fts_classified
 
     if num_stars_high > 0:
-        non_zero_stars.append(str(fts_file))
-        calc_dict[str(fts_file)] = star_categories[0]
+        non_zero_stars.append(fts_file.name)
+        calc_dict[fts_file.name] = star_categories[0]
 
         df = sources_high.to_pandas()
         brightest = df.sort_values("flux", ascending=False)
@@ -203,8 +215,8 @@ def process_fts_file(
         print(brightest.head(10))
 
     elif num_stars_low > 0:
-        zero_stars_only_th10.append(str(fts_file))
-        calc_dict[str(fts_file)] = star_categories[1]
+        zero_stars_only_th10.append(fts_file.name)
+        calc_dict[fts_file.name] = star_categories[1]
 
         df = sources_low.to_pandas()
         brightest = df.sort_values("flux", ascending=False)
@@ -212,11 +224,115 @@ def process_fts_file(
         print(brightest.head(10))
 
     else:
-        zero_stars_th5.append(str(fts_file))
-        calc_dict[str(fts_file)] = star_categories[2]
+        zero_stars_th5.append(fts_file.name)
+        calc_dict[fts_file.name] = star_categories[2]
 
     print("########################################")
 
+
+
+def look_up_keys(
+    predicted_json: dict[str, Any],
+    calculated_json: dict[str, Any],
+) -> tuple[list[str], list[str], list[str]]:
+    """
+    Compare the keys of two dictionaries.
+
+    Parameters:
+        predicted_json: The left dictionary.
+        calculated_json: The right dictionary.
+
+    Returns:
+        A tuple containing:
+            - both_keys: Keys present in both dictionaries, in the order
+              they appear in predicted_json.
+            - left_only_keys: Keys only present in predicted_json, in the
+              order they appear in predicted_json.
+            - right_only_keys: Keys only present in calculated_json, in the
+              order they appear in calculated_json.
+    """
+    calculated_keys = set(calculated_json)
+
+    both_keys = []
+    left_only_keys = []
+
+    for key in predicted_json:
+        if key in calculated_keys:
+            both_keys.append(key)
+        else:
+            left_only_keys.append(key)
+
+    predicted_keys = set(predicted_json)
+
+    right_only_keys = [
+        key for key in calculated_json
+        if key not in predicted_keys
+    ]
+
+    return both_keys, left_only_keys, right_only_keys
+
+
+
+## Create unified json for comparison of predicted
+## and calculates
+def unify_predicted_and_calculated_json(
+    predicted_json: Path,
+    calculated_json: Path,
+    unified_tsv: Path,
+):
+    """
+    Create a TSV file containing the comparison between predicted and
+    calculated values.
+
+    Columns:
+        filename    predicted    calculated    mismatch
+
+    Only keys present in both dictionaries are written.
+    """
+
+    print("going to read predicted and calculated jsons....")
+    with predicted_json.open("r", encoding="utf-8") as file:
+        predicted_json = json.load(file)
+
+    with calculated_json.open("r", encoding="utf-8") as file:
+        calculated_json = json.load(file)
+
+    both_keys, predicted_only_keys, calculated_only_keys = \
+        look_up_keys(predicted_json, calculated_json)
+
+    #
+    # Ensure the output directory exists.
+    #
+    print(f"going to write unified.tsv to: \n  {unified_tsv.name}")
+    unified_tsv.parent.mkdir(parents=True, exist_ok=True)
+
+    with unified_tsv.open("w", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file, delimiter="\t")
+
+        #
+        # Header
+        #
+        writer.writerow([
+            "filename",
+            "predicted",
+            "calculated",
+            "mismatch",
+        ])
+
+        #
+        # Rows
+        #
+        for key in both_keys:
+            predicted = predicted_json[key]
+            calculated = calculated_json[key]
+            mismatch = "True" if predicted != calculated else ""
+
+            writer.writerow([
+                key,
+                predicted,
+                calculated,
+                mismatch
+            ])
 
 def main() -> None:
     import os
@@ -263,6 +379,13 @@ def main() -> None:
     print(f"#######  Saving calculated star categories to: {calculated_json}#################")
     with open(calculated_json, 'w') as f:
         json.dump(calc_dict, f, indent=4)
+
+    ### writing unified .tsv for intersected keys
+
+    unify_predicted_and_calculated_json(Path(root_dir) / config.predicted_json,
+                                        Path(root_dir) / config.calculated_json,
+                                        Path(root_dir) / config.unified_tsv)
+
 
     if config.dry_run:
         print("\nDry run enabled: no files copied.")
