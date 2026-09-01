@@ -51,7 +51,7 @@ def read_config(filename: str = "fts_config.ini") -> FTSConfig:
         high_threshold=cfg.getfloat("high_threshold", 10.0),
         dry_run=cfg.getboolean("dry_run", True),
         predicted_json=cfg.get("predicted_json", "predicted.json"),
-        calculated_json=cfg.get("calculated_json", "calculatedjson"),
+        calculated_json=cfg.get("calculated_json", "calculated.json"),
         calculation_output=cfg.get("calculation_output", "OUTPUTS/CALCULATION_FTS"),
         unified_tsv=cfg.get("unified_tsv", "OUTPUTS/unified.tsv"),
         summary_json=cfg.get("summary_json", "OUTPUTS/summary.json"),
@@ -354,9 +354,13 @@ def main() -> None:
     non_zero_stars = []
     calc_dict = {}
 
+    # This cycle runs over subfolders. It is expected to have multiple subdolders with .fts files
+    # within the input directory (each day the telescope output is inside a separate folder).
     for fts_dir in get_input_directories(str(root_dir / config.fts_input)):
         print(f"\nProcessing {fts_dir}")
 
+        # This cycle runs over .fts files in folder. It classifies .fts file and adds it to the corresponding list
+        # the calc_dict is updated as well on each fts file, adding the filename as a key and the category as the value
         for fts_file in sorted(fts_dir.glob("*.fts")):
             process_fts_file(
                 fts_file=fts_file,
