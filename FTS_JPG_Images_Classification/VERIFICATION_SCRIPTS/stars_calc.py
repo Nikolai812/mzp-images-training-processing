@@ -117,8 +117,8 @@ def get_star_sources(
 
 # Copies the file from fts input to classified folders
 # (expects that there should be  >= 3 classes)
-def copy_classified_files(config: FTSConfig, non_zero_stars: list[str], zero_stars_only_th10: list[str],
-                          zero_stars_th5: list[str], calc_dir: Path) -> None:
+def copy_classified_files(config: FTSConfig, non_zero_stars: dict[str, Path], zero_stars_only_th10: dict[str, Path],
+                          zero_stars_th5: dict[str, Path], calc_dir: Path) -> None:
     """
     Copy classified FITS files into the configured output directories.
 
@@ -149,9 +149,9 @@ def copy_classified_files(config: FTSConfig, non_zero_stars: list[str], zero_sta
         (zero_stars_th5, destinations[2], "NO_STARS"),
     ]
 
-    for files, destination, label in classifications:
-        for filename in files:
-            src = Path(filename)
+    for filerecords, destination, label in classifications:
+        for filename, filepath in filerecords.items():
+            src = filepath / filename
             dst = destination / src.name
 
             shutil.copy2(src, dst)
@@ -166,9 +166,9 @@ def copy_classified_files(config: FTSConfig, non_zero_stars: list[str], zero_sta
 def process_fts_file(
     fts_file: Path,
     config: FTSConfig,
-    zero_stars_th5: list[str],
-    zero_stars_only_th10: list[str],
-    non_zero_stars: list[str],
+    zero_stars_th5: dict[str, Path],
+    zero_stars_only_th10: dict[str, Path],
+    non_zero_stars: dict[str, Path],
     calc_dict: dict[str, str],
 ) -> None:
 
@@ -205,31 +205,51 @@ def process_fts_file(
 
     star_categories = config.fts_classified
 
+    #
+    # Directory containing the current .fts file.
+    #
+    fts_directory = fts_file.parent
+
     if num_stars_high > 0:
-        non_zero_stars.append(fts_file.name)
+
+        #
+        # filename -> directory path
+        #
+        non_zero_stars[fts_file.name] = fts_directory
+
         calc_dict[fts_file.name] = star_categories[0]
 
         df = sources_high.to_pandas()
         brightest = df.sort_values("flux", ascending=False)
+
         print("Top 10 brightest (high threshold):")
         print(brightest.head(10))
 
     elif num_stars_low > 0:
-        zero_stars_only_th10.append(fts_file.name)
+
+        #
+        # filename -> directory path
+        #
+        zero_stars_only_th10[fts_file.name] = fts_directory
+
         calc_dict[fts_file.name] = star_categories[1]
 
         df = sources_low.to_pandas()
         brightest = df.sort_values("flux", ascending=False)
+
         print("Top 10 brightest (low threshold):")
         print(brightest.head(10))
 
     else:
-        zero_stars_th5.append(fts_file.name)
+
+        #
+        # filename -> directory path
+        #
+        zero_stars_th5[fts_file.name] = fts_directory
+
         calc_dict[fts_file.name] = star_categories[2]
 
     print("########################################")
-
-
 
 def look_up_keys(
     predicted_json: dict[str, Any],
@@ -349,9 +369,9 @@ def main() -> None:
     config = read_config()
     predicted_json=  read_json_file(Path(root_dir) / config.predicted_json)
 
-    zero_stars_th5 = []
-    zero_stars_only_th10 = []
-    non_zero_stars = []
+    zero_stars_th5: dict[str, Path] ={}
+    zero_stars_only_th10: dict[str, Path] ={}
+    non_zero_stars: dict[str, Path] = {}
     calc_dict = {}
 
     # This cycle runs over subfolders. It is expected to have multiple subfolders with .fts files
