@@ -29,7 +29,7 @@ class FTSConfig:
     predicted_json: str
     calculated_json: str
     calculation_output: str
-    unified_tsv: str
+    unified_csv: str
     summary_json: str
 
 
@@ -53,7 +53,7 @@ def read_config(filename: str = "fts_config.ini") -> FTSConfig:
         predicted_json=cfg.get("predicted_json", "predicted.json"),
         calculated_json=cfg.get("calculated_json", "calculated.json"),
         calculation_output=cfg.get("calculation_output", "OUTPUTS/CALCULATION_FTS"),
-        unified_tsv=cfg.get("unified_tsv", "OUTPUTS/unified.tsv"),
+        unified_csv=cfg.get("unified_csv", "OUTPUTS/unified.csv"),
         summary_json=cfg.get("summary_json", "OUTPUTS/summary.json"),
     )
 
@@ -278,7 +278,7 @@ def look_up_keys(
 def unify_predicted_and_calculated_json(
     predicted_json: Path,
     calculated_json: Path,
-    unified_tsv: Path,
+    unified_csv: Path,
 ):
     """
     Create a TSV file containing the comparison between predicted and
@@ -303,11 +303,11 @@ def unify_predicted_and_calculated_json(
     #
     # Ensure the output directory exists.
     #
-    print(f"going to write unified.tsv to: \n  {unified_tsv.name}")
-    unified_tsv.parent.mkdir(parents=True, exist_ok=True)
+    print(f"going to write unified.csv to: \n  {unified_csv.name}")
+    unified_csv.parent.mkdir(parents=True, exist_ok=True)
 
-    with unified_tsv.open("w", newline="", encoding="utf-8") as file:
-        writer = csv.writer(file, delimiter="\t")
+    with unified_csv.open("w", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file, delimiter=",")
 
         #
         # Header
@@ -354,7 +354,7 @@ def main() -> None:
     non_zero_stars = []
     calc_dict = {}
 
-    # This cycle runs over subfolders. It is expected to have multiple subdolders with .fts files
+    # This cycle runs over subfolders. It is expected to have multiple subfolders with .fts files
     # within the input directory (each day the telescope output is inside a separate folder).
     for fts_dir in get_input_directories(str(root_dir / config.fts_input)):
         print(f"\nProcessing {fts_dir}")
@@ -388,7 +388,7 @@ def main() -> None:
 
     unify_predicted_and_calculated_json(Path(root_dir) / config.predicted_json,
                                         Path(root_dir) / config.calculated_json,
-                                        Path(root_dir) / config.unified_tsv)
+                                        Path(root_dir) / config.unified_csv)
 
 
     if config.dry_run:
