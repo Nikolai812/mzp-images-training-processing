@@ -210,9 +210,10 @@ def process_fts_file(
     #
     fts_directory = fts_file.parent
 
+    # Depending on num_stars_high and num_starts_low, the filename and path are added to 1 of 3 dictionaries
     if num_stars_high > 0:
-
         #
+        # Adding filename, path to non_zero_stars dictionary
         # filename -> directory path
         #
         non_zero_stars[fts_file.name] = fts_directory
@@ -226,8 +227,8 @@ def process_fts_file(
         print(brightest.head(10))
 
     elif num_stars_low > 0:
-
         #
+        # Adding filename, path to zero_stars_only_th10 dictionary
         # filename -> directory path
         #
         zero_stars_only_th10[fts_file.name] = fts_directory
@@ -243,6 +244,7 @@ def process_fts_file(
     else:
 
         #
+        # Adding filename, path to zero_stars_th5 dictionary
         # filename -> directory path
         #
         zero_stars_th5[fts_file.name] = fts_directory
