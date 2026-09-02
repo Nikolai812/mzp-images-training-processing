@@ -30,7 +30,6 @@ class FTSConfig:
     calculated_json: str
     calculation_output: str
     unified_csv: str
-    summary_json: str
 
 
 def read_config(filename: str = "fts_config.ini") -> FTSConfig:
@@ -53,8 +52,7 @@ def read_config(filename: str = "fts_config.ini") -> FTSConfig:
         predicted_json=cfg.get("predicted_json", "predicted.json"),
         calculated_json=cfg.get("calculated_json", "calculated.json"),
         calculation_output=cfg.get("calculation_output", "OUTPUTS/CALCULATION_FTS"),
-        unified_csv=cfg.get("unified_csv", "OUTPUTS/unified.csv"),
-        summary_json=cfg.get("summary_json", "OUTPUTS/summary.json"),
+        unified_csv=cfg.get("unified_csv", "OUTPUTS/unified.csv")
     )
 
 def read_json_file(json_file: Path) -> Any | None:
@@ -368,8 +366,9 @@ def main() -> None:
     print('root_dir:', root_dir)
     ###### END OF SETTING ROOT
 
+    ##### Configuration file by default (hardcoded): "fts_config.ini"
     config = read_config()
-    predicted_json=  read_json_file(Path(root_dir) / config.predicted_json)
+    # predicted_json=  read_json_file(Path(root_dir) / config.predicted_json)
 
     zero_stars_th5: dict[str, Path] ={}
     zero_stars_only_th10: dict[str, Path] ={}
@@ -406,19 +405,37 @@ def main() -> None:
     with open(calculated_json, 'w') as f:
         json.dump(calc_dict, f, indent=4)
 
-    ### writing unified .tsv for intersected keys
-
-    unify_predicted_and_calculated_json(Path(root_dir) / config.predicted_json,
-                                        Path(root_dir) / config.calculated_json,
-                                        Path(root_dir) / config.unified_csv)
 
 
     if config.dry_run:
-        print("\nDry run enabled: no files copied.")
+        print("\nDry run enabled: no files copied. Call unify_predicted_and_calculated_json")
+        unify_predicted_and_calculated_json(Path(root_dir) / config.predicted_json,
+                                            Path(root_dir) / config.calculated_json,
+                                            Path(root_dir) / config.unified_csv)
+        print(f"Unified .csv output written to {Path(root_dir) / config.unified_csv}")
+
     else:
         print("\nCopying classified FITS files...")
         copy_classified_files(config, non_zero_stars, zero_stars_only_th10, zero_stars_th5, root_dir)
 
 
 if __name__ == "__main__":
+    ''' This script is expected to 
+    1. (configuration dry_run=true ) Verify the trained output for the case when the training is being done
+    on .fts files and those files are to be classified into 3 categories 
+    fts_classified=FTS_BRIGHT_STARS,FTS_DIM_STARS,FTS_NO_STARS. The run expects the predicted.json file to exist,
+    the path to the file is specified in the config file 'fts_config.ini'. The run produces 'calculated_json' file, where each of the
+    .fts files is supplied by the assigned category and the 'unified_csv' file where the predicted and calculated categories are
+    put together and a special 'mismatch' column is added to emphasize the mismatched files 
+    2. (configuraion dry_run=false) Produce training sets for categories fts_classified=FTS_BRIGHT_STARS,FTS_DIM_STARS,FTS_NO_STARS
+    by handling the arbitrary .fts images and sorting them by means of astropy package. Does not expect the predicted_json to exist.
+    Calculates the classified categories of the .fts files and the copies the input files into the  category folders 
+    (FTS_BRIGHT_STARS,FTS_DIM_STARS,FTS_NO_STARS) created in the root folder.
+    
+    The above mentioned 3 categories are defined via 2 thresholds (high and low), the values for them are set in the config file
+    fts_config.ini (currently high=10, low=5), the category FTS_BRIGHT_STARS has non-zero number of stars above high threshold.
+    the category FTS_DIM_STARS has non-zero number of stars above low threshold, but zero stars above high threshold. 
+    The rest images are category FTS_NO_STARS.
+    
+    '''
     main()
