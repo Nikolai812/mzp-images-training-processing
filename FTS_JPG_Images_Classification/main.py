@@ -1,4 +1,6 @@
 import argparse
+import sys
+
 from config_reader import ConfigReader
 from config_reader import Framework
 
@@ -67,6 +69,12 @@ def main():
     #
 
     config, manager = build_framework_manager(args.framework, config_reader)
+
+    #### Probably extend smoke testing in future. Currently is implemented only for Tensorflow
+    # from FTS_JPG_Images_Classification.TEST_SCRIPTS.tf_test import smoke_test_manager
+    # smoke_test_manager(manager)
+    # sys.exit(1)
+    #####
 
     if args.train:
         manager.pre_train()

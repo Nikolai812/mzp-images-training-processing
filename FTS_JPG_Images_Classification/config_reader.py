@@ -7,6 +7,7 @@ class Framework(Enum):
     PYTORCH = "PYTORCH"
     TENSORFLOW = "TENSORFLOW"
     PYTORCH_FTS = "PYTORCH_FTS"
+    TENSORFLOW_FTS = "TENSORFLOW_FTS"
 
 
 class ConfigReader:
