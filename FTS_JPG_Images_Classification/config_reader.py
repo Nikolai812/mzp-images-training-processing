@@ -8,6 +8,8 @@ class Framework(Enum):
     TENSORFLOW = "TENSORFLOW"
     PYTORCH_FTS = "PYTORCH_FTS"
     TENSORFLOW_FTS = "TENSORFLOW_FTS"
+    PYTORCH_FTS_GOOD_FAINT = "PYTORCH_FTS_GOOD_FAINT"
+    TENSORFLOW_FTS_GOOD_FAINT = "TENSORFLOW_FTS_GOOD_FAINT"
 
 
 class ConfigReader:
@@ -37,36 +39,6 @@ class ConfigReader:
             'data_type': section['data_type']
         }
 
-
-    # def get_pytorch_config(self):
-    #     return {
-    #         'training_input': self.config['PYTORCH']['training_input'],
-    #         'raw_input': self.config['PYTORCH']['raw_input'],
-    #         'models': self.config['PYTORCH']['models'],
-    #         'model_file': self.config['PYTORCH']['model_file'],
-    #         'predict_from_model_file': self.config['PYTORCH'].get(
-    #         'predict_from_model_file',
-    #         ''),
-    #         'epochs': self.config['PYTORCH']['epochs'],
-    #         'output_json': self.config['PYTORCH']['output_json'],
-    #         'training_categories': self.config['PYTORCH']['training_categories'],
-    #         'data_type': self.config['PYTORCH']['data_type']
-    #     }
-    #
-    # def get_tensorflow_config(self):
-    #     return {
-    #         'training_input': self.config['TENSORFLOW']['training_input'],
-    #         'raw_input': self.config['TENSORFLOW']['raw_input'],
-    #         'models': self.config['TENSORFLOW']['models'],
-    #         'model_file' : self.config['TENSORFLOW']['model_file'],
-    #         'predict_from_model_file': self.config['TENSORFLOW'].get(
-    #         'predict_from_model_file',
-    #         ''),
-    #         'epochs': self.config['TENSORFLOW']['epochs'],
-    #         'output_json': self.config['TENSORFLOW']['output_json'],
-    #         'training_categories': self.config['TENSORFLOW']['training_categories'],
-    #         'data_type': self.config['TENSORFLOW']['data_type']
-    #     }
 
     def ensure_directories_exist(self):
         os.makedirs(self.config['PYTORCH']['training_input'], exist_ok=True)
